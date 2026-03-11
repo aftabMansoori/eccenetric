@@ -44,4 +44,24 @@ export class AssetController {
       next(error);
     }
   };
+
+  public deleteAsset = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = ConfirmUploadSchema.parse({ id: req.params.id });
+      await this.assetService.deleteAsset(id);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getAssetViewUrl = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = ConfirmUploadSchema.parse({ id: req.params.id });
+      const url = await this.assetService.generateViewUrl(id);
+      res.redirect(url);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

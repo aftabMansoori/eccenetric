@@ -12,8 +12,10 @@ const assetController = new AssetController(assetService);
 
 // Endpoints
 router.post('/upload-intent', assetController.getUploadIntent);
-router.patch('/:id/confirm', assetController.confirmAsset);
+router.post('/confirm/:id', assetController.confirmAsset);
 router.get('/', assetController.listAssets);
 router.get('/:id', assetController.getAsset);
+router.delete('/:id', assetController.deleteAsset);
+router.get('/:id/view', assetController.getAssetViewUrl);
 
 export default router;

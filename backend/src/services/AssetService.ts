@@ -16,15 +16,16 @@ export class AssetService {
   }) {
     const id = uuidv4();
     const storageKey = `assets/${id}-${data.originalName}`;
+    console.log(storageKey);
 
     const { data: asset, error } = await supabase
       .from('assets')
       .insert({
         id,
-        originalName: data.originalName,
-        storageKey,
-        mimeType: data.mimeType,
-        sizeBytes: data.sizeBytes,
+        original_name: data.originalName,
+        storage_key: storageKey,
+        mime_type: data.mimeType,
+        size_bytes: data.sizeBytes,
         checksum: data.checksum || null,
         status: AssetStatus.PENDING,
       })
@@ -111,5 +112,25 @@ export class AssetService {
       throw error;
     }
     return asset;
+  }
+
+  async deleteAsset(id: string) {
+    const asset = await this.getAsset(id);
+
+    // 1. Delete from GCS
+    await this.storageProvider.deleteFile(asset.storageKey);
+
+    // 2. Delete from DB
+    const { error } = await supabase
+      .from('assets')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async generateViewUrl(id: string) {
+    const asset = await this.getAsset(id);
+    return await this.storageProvider.getDownloadUrl(asset.storageKey);
   }
 }

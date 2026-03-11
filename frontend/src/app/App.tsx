@@ -1,18 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { LayoutGrid, List, Upload as UploadIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { UploadZone } from './components/upload-zone';
 import { AssetGallery } from './components/asset-gallery';
 import { AssetList } from './components/asset-list';
 import { SearchFilter, SearchFilters } from './components/search-filter';
 import type { Asset, UploadProgress } from './types/asset';
-
-const STORAGE_KEY = 'dam-assets';
+import { DAM_API_URL } from '../constants/api';
 
 export default function App() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<SearchFilters>({
     searchTerm: '',
     fileType: 'all',
@@ -20,27 +21,39 @@ export default function App() {
     tags: [],
   });
 
-  // Load assets from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsedAssets = JSON.parse(stored);
-        // Filter out assets with data URLs that may have been lost
-        const validAssets = parsedAssets.filter((asset: Asset) => asset.url);
-        setAssets(validAssets);
-      } catch (error) {
-        console.error('Failed to load assets:', error);
-      }
-    }
-  }, []);
+  const fetchAssets = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${DAM_API_URL}/assets`, {
+        params: {
+          mimeType: filters.fileType !== 'all' ? filters.fileType : undefined,
+          limit: 100,
+        }
+      });
 
-  // Save assets to localStorage whenever they change
-  useEffect(() => {
-    if (assets.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
+      const mappedAssets: Asset[] = response.data.items.map((item: any) => ({
+        id: item.id,
+        name: item.originalName,
+        type: getFileType(item.mimeType),
+        mimeType: item.mimeType,
+        size: item.sizeBytes,
+        uploadDate: item.created_at || item.createdAt,
+        tags: [], // Tags not yet implemented in backend
+        url: `${DAM_API_URL}/assets/${item.id}/view`, // Placeholder endpoint for viewing
+      }));
+
+      setAssets(mappedAssets);
+    } catch (error) {
+      console.error('Failed to fetch assets:', error);
+      toast.error('Failed to load assets from server');
+    } finally {
+      setLoading(false);
     }
-  }, [assets]);
+  };
+
+  useEffect(() => {
+    fetchAssets();
+  }, [filters.fileType]);
 
   const getFileType = (mimeType: string): Asset['type'] => {
     if (mimeType.startsWith('image/')) return 'image';
@@ -50,8 +63,9 @@ export default function App() {
   };
 
   const handleUpload = async (files: File[]) => {
+    debugger
     const newUploads: UploadProgress[] = files.map((file) => ({
-      fileId: crypto.randomUUID(),
+      fileId: crypto.randomUUID(), // Local temporary ID for tracking
       fileName: file.name,
       progress: 0,
       status: 'uploading' as const,
@@ -64,43 +78,45 @@ export default function App() {
       const upload = newUploads[i];
 
       try {
-        // Simulate upload progress
-        const progressInterval = setInterval(() => {
-          setUploadProgress((prev) =>
-            prev.map((u) =>
-              u.fileId === upload.fileId && u.progress < 90
-                ? { ...u, progress: u.progress + 10 }
-                : u
-            )
-          );
-        }, 200);
-
-        // Read file as data URL
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
+        // Step 1: Get Upload Intent
+        const intentResponse = await axios.post(`${DAM_API_URL}/assets/upload-intent`, {
+          originalName: file.name,
+          mimeType: file.type,
+          sizeBytes: file.size,
         });
 
-        clearInterval(progressInterval);
+        const { asset: pendingAsset, uploadUrl } = intentResponse.data;
 
-        // Generate mock tags based on file type
-        const type = getFileType(file.type);
-        const mockTags: string[] = [];
-        if (type === 'image') mockTags.push('photo');
-        if (type === 'video') mockTags.push('media');
-        if (type === 'pdf') mockTags.push('document');
+        // Step 2: Upload to GCS via Signed URL
+        await axios.put(uploadUrl, file, {
+          headers: {
+            'Content-Type': file.type,
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || file.size));
+            setUploadProgress((prev) =>
+              prev.map((u) =>
+                u.fileId === upload.fileId
+                  ? { ...u, progress: percentCompleted }
+                  : u
+              )
+            );
+          },
+        });
+
+        // Step 3: Confirm Upload
+        const confirmResponse = await axios.post(`${DAM_API_URL}/assets/confirm/${pendingAsset.id}`);
+        const finalAsset = confirmResponse.data;
 
         const newAsset: Asset = {
-          id: upload.fileId,
-          name: file.name,
-          type,
-          mimeType: file.type,
-          size: file.size,
-          uploadDate: new Date().toISOString(),
-          tags: mockTags,
-          url: dataUrl,
+          id: finalAsset.id,
+          name: finalAsset.originalName,
+          type: getFileType(finalAsset.mimeType),
+          mimeType: finalAsset.mimeType,
+          size: finalAsset.sizeBytes,
+          uploadDate: finalAsset.updated_at || finalAsset.createdAt,
+          tags: [],
+          url: `${DAM_API_URL}/assets/${finalAsset.id}/view`,
         };
 
         setAssets((prev) => [newAsset, ...prev]);
@@ -115,21 +131,21 @@ export default function App() {
 
         toast.success(`${file.name} uploaded successfully`);
 
-        // Remove from progress after 2 seconds
         setTimeout(() => {
           setUploadProgress((prev) =>
             prev.filter((u) => u.fileId !== upload.fileId)
           );
         }, 2000);
       } catch (error) {
+        console.error('Upload error:', error);
         setUploadProgress((prev) =>
           prev.map((u) =>
             u.fileId === upload.fileId
               ? {
-                  ...u,
-                  status: 'error',
-                  error: 'Failed to upload file',
-                }
+                ...u,
+                status: 'error',
+                error: 'Failed to upload file',
+              }
               : u
           )
         );
@@ -139,25 +155,35 @@ export default function App() {
   };
 
   const handleCancelUpload = (fileId: string) => {
+    // In a real app, you'd cancel the axios request
     setUploadProgress((prev) => prev.filter((u) => u.fileId !== fileId));
     toast.info('Upload cancelled');
   };
 
-  const handleDelete = (id: string) => {
-    const asset = assets.find((a) => a.id === id);
-    setAssets((prev) => prev.filter((a) => a.id !== id));
-    toast.success(`${asset?.name} deleted`);
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(`${DAM_API_URL}/assets/${id}`);
+      setAssets((prev) => prev.filter((a) => a.id !== id));
+      toast.success('Asset deleted');
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete asset');
+    }
   };
 
-  const handleDownload = (asset: Asset) => {
-    // Create a temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = asset.url;
-    link.download = asset.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Downloading ${asset.name}`);
+  const handleDownload = async (asset: Asset) => {
+    try {
+      // In a real app, the backend should provide a direct download URL
+      toast.info(`Preparing ${asset.name} for download...`);
+      const link = document.createElement('a');
+      link.href = asset.url; // This should be a direct URL or a proxy download URL
+      link.setAttribute('download', asset.name);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      toast.error('Failed to download asset');
+    }
   };
 
   // Filter and sort assets

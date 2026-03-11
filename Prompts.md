@@ -27,3 +27,11 @@ Help me scaffold dedicated a Node.js (TypeScript) backend to handle logic, secur
 - Ensure the code follows Clean Code principles (DRY, SOLID).
 
 Start by scaffolding the folder structure and the `IStorageProvider` interface.
+
+----------------------------------------
+
+SupaBase.util.ts
+AssetService.ts
+- use supabase util for db services for CRUD operations in asset services
+
+----------------------------------------
