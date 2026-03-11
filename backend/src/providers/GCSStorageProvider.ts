@@ -1,8 +1,8 @@
 import { Storage } from '@google-cloud/storage';
 import { IStorageProvider } from './storage.interface.js';
-import dotenv from 'dotenv';
+// import dotenv from 'dotenv';
 
-dotenv.config();
+// dotenv.config();
 
 export class GCSStorageProvider implements IStorageProvider {
   private storage: Storage;

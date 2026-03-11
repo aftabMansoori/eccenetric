@@ -2,6 +2,7 @@
 backend/node_modules
 backend/.env
 backend/.env.local
+backend/gcp_storage_creds.json
 
 # frontend
 frontend/node_modules

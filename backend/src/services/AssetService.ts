@@ -1,13 +1,12 @@
-import { IAssetRepository } from '../repositories/AssetRepository.js';
 import { IStorageProvider } from '../providers/storage.interface.js';
-import { AssetStatus } from '../models/Asset.js';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../utils/SupaBase.util.js';
+import { AssetStatus } from '../types/asset.js';
 
 export class AssetService {
   constructor(
-    private assetRepository: IAssetRepository,
     private storageProvider: IStorageProvider
-  ) {}
+  ) { }
 
   async prepareUpload(data: {
     originalName: string;
@@ -18,15 +17,21 @@ export class AssetService {
     const id = uuidv4();
     const storageKey = `assets/${id}-${data.originalName}`;
 
-    const asset = await this.assetRepository.create({
-      id,
-      originalName: data.originalName,
-      storageKey,
-      mimeType: data.mimeType,
-      sizeBytes: data.sizeBytes,
-      checksum: data.checksum,
-      status: AssetStatus.PENDING,
-    });
+    const { data: asset, error } = await supabase
+      .from('assets')
+      .insert({
+        id,
+        originalName: data.originalName,
+        storageKey,
+        mimeType: data.mimeType,
+        sizeBytes: data.sizeBytes,
+        checksum: data.checksum || null,
+        status: AssetStatus.PENDING,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
 
     const uploadUrl = await this.storageProvider.generateUploadUrl(
       storageKey,
@@ -40,16 +45,19 @@ export class AssetService {
   }
 
   async confirmUpload(id: string) {
-    const asset = await this.assetRepository.findById(id);
-    if (!asset) {
-      throw new Error('Asset not found');
+    const { data: asset, error } = await supabase
+      .from('assets')
+      .update({ status: AssetStatus.ACTIVE })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') throw new Error('Asset not found');
+      throw error;
     }
 
-    // In a real application, you might want to verify with GCS that the file exists
-    // and potentially check the checksum.
-    
-    await this.assetRepository.updateStatus(id, AssetStatus.ACTIVE);
-    return await this.assetRepository.findById(id);
+    return asset;
   }
 
   async listAssets(filters: {
@@ -60,19 +68,47 @@ export class AssetService {
     limit?: number;
   }) {
     const limit = filters.limit || 10;
-    const offset = ((filters.page || 1) - 1) * limit;
+    const page = filters.page || 1;
+    const offset = (page - 1) * limit;
 
-    return await this.assetRepository.findAll({
-      ...filters,
+    let query = supabase
+      .from('assets')
+      .select('*', { count: 'exact' });
+
+    if (filters.mimeType) {
+      query = query.eq('mimeType', filters.mimeType);
+    }
+    if (filters.minSize) {
+      query = query.gte('sizeBytes', filters.minSize);
+    }
+    if (filters.maxSize) {
+      query = query.lte('sizeBytes', filters.maxSize);
+    }
+
+    const { data, count, error } = await query
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return {
+      items: data,
+      total: count,
+      page,
       limit,
-      offset,
-    });
+    };
   }
 
   async getAsset(id: string) {
-    const asset = await this.assetRepository.findById(id);
-    if (!asset) {
-      throw new Error('Asset not found');
+    const { data: asset, error } = await supabase
+      .from('assets')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') throw new Error('Asset not found');
+      throw error;
     }
     return asset;
   }

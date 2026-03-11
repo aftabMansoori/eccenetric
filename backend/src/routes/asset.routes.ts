@@ -1,15 +1,13 @@
 import { Router } from 'express';
 import { AssetController } from '../controllers/AssetController.js';
 import { AssetService } from '../services/AssetService.js';
-import { AssetRepository } from '../repositories/AssetRepository.js';
 import { GCSStorageProvider } from '../providers/GCSStorageProvider.js';
 
 const router = Router();
 
 // Dependecy Injection Setup
 const storageProvider = new GCSStorageProvider();
-const assetRepository = new AssetRepository();
-const assetService = new AssetService(assetRepository, storageProvider);
+const assetService = new AssetService(storageProvider);
 const assetController = new AssetController(assetService);
 
 // Endpoints

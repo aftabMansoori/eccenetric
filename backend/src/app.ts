@@ -12,6 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use(helmet());
 
+app.get("/_healthz", (req, res) => {
+    res.json({ message: "OK" });
+})
+
 // Main Routes
 app.use('/api/v1/assets', assetRoutes);
 
