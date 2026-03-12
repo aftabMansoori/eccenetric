@@ -16,7 +16,6 @@ export class AssetService {
   }) {
     const id = uuidv4();
     const storageKey = `assets/${id}-${data.originalName}`;
-    console.log(storageKey);
 
     const { data: asset, error } = await supabase
       .from('assets')

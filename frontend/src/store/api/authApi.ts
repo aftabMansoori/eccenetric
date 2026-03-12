@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { axiosBaseQuery } from './axiosBaseQuery';
 import { DAM_API_URL } from '../../constants/api';
 
 interface AuthRequest {
@@ -32,20 +33,18 @@ interface SignUpResponse {
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${DAM_API_URL}/auth`,
-  }),
+  baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
     signIn: builder.mutation<SignInResponse, AuthRequest>({
       query: (body) => ({
-        url: '/signin',
+        url: '/auth/signin',
         method: 'POST',
         body,
       }),
     }),
     signUp: builder.mutation<SignUpResponse, AuthRequest>({
       query: (body) => ({
-        url: '/signup',
+        url: '/auth/signup',
         method: 'POST',
         body,
       }),

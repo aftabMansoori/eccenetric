@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { axiosBaseQuery } from './axiosBaseQuery';
 import { DAM_API_URL } from '../../constants/api';
 import type { Asset, AssetType } from '../../types/asset';
 
@@ -63,12 +64,13 @@ function mapApiAsset(item: ApiAsset): Asset {
 
 export const assetApi = createApi({
   reducerPath: 'assetApi',
-  baseQuery: fetchBaseQuery({ baseUrl: `${DAM_API_URL}/assets` }),
+  baseQuery: axiosBaseQuery(),
   tagTypes: ['Asset'],
   endpoints: (builder) => ({
     listAssets: builder.query<{ items: Asset[]; total: number | null; page: number; limit: number }, ListAssetsParams | void>({
       query: (params) => ({
-        url: '/',
+        url: '/assets',
+        method: 'GET',
         params: params ?? { limit: 100 },
       }),
       transformResponse: (response: ListAssetsResponse) => ({
@@ -87,14 +89,17 @@ export const assetApi = createApi({
     }),
 
     getAsset: builder.query<Asset, string>({
-      query: (id) => `/${id}`,
+      query: (id) => ({
+        url: `/assets/${id}`,
+        method: 'GET',
+      }),
       transformResponse: (response: ApiAsset) => mapApiAsset(response),
       providesTags: (_result, _error, id) => [{ type: 'Asset', id }],
     }),
 
     deleteAsset: builder.mutation<void, string>({
       query: (id) => ({
-        url: `/${id}`,
+        url: `/assets/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, id) => [
@@ -105,7 +110,7 @@ export const assetApi = createApi({
 
     createUploadIntent: builder.mutation<UploadIntentResponse, UploadIntentRequest>({
       query: (body) => ({
-        url: '/upload-intent',
+        url: '/assets/upload-intent',
         method: 'POST',
         body,
       }),
@@ -113,7 +118,7 @@ export const assetApi = createApi({
 
     confirmUpload: builder.mutation<ApiAsset, string>({
       query: (id) => ({
-        url: `/confirm/${id}`,
+        url: `/assets/confirm/${id}`,
         method: 'POST',
       }),
       invalidatesTags: [{ type: 'Asset', id: 'LIST' }],
