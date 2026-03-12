@@ -8,19 +8,20 @@ export class AssetService {
     private storageProvider: IStorageProvider
   ) { }
 
-  async prepareUpload(data: {
+  async prepareUpload(userId: string, data: {
     originalName: string;
     mimeType: string;
     sizeBytes: number;
     checksum?: string;
   }) {
     const id = uuidv4();
-    const storageKey = `assets/${id}-${data.originalName}`;
+    const storageKey = `assets/${userId}/${id}-${data.originalName}`;
 
     const { data: asset, error } = await supabase
       .from('assets')
       .insert({
         id,
+        user_id: userId,
         original_name: data.originalName,
         storage_key: storageKey,
         mime_type: data.mimeType,
@@ -44,11 +45,12 @@ export class AssetService {
     };
   }
 
-  async confirmUpload(id: string) {
+  async confirmUpload(userId: string, id: string) {
     const { data: asset, error } = await supabase
       .from('assets')
       .update({ status: AssetStatus.ACTIVE })
       .eq('id', id)
+      .eq('user_id', userId)
       .select()
       .single();
 
@@ -60,7 +62,7 @@ export class AssetService {
     return asset;
   }
 
-  async listAssets(filters: {
+  async listAssets(userId: string, filters: {
     mimeType?: string;
     minSize?: number;
     maxSize?: number;
@@ -73,7 +75,8 @@ export class AssetService {
 
     let query = supabase
       .from('assets')
-      .select('*', { count: 'exact' });
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId);
 
     if (filters.mimeType) {
       query = query.eq('mime_type', filters.mimeType);
@@ -99,11 +102,12 @@ export class AssetService {
     };
   }
 
-  async getAsset(id: string) {
+  async getAsset(userId: string, id: string) {
     const { data: asset, error } = await supabase
       .from('assets')
       .select('*')
       .eq('id', id)
+      .eq('user_id', userId)
       .single();
 
     if (error) {
@@ -113,8 +117,8 @@ export class AssetService {
     return asset;
   }
 
-  async deleteAsset(id: string) {
-    const asset = await this.getAsset(id);
+  async deleteAsset(userId: string, id: string) {
+    const asset = await this.getAsset(userId, id);
 
     // 1. Delete from GCS
     await this.storageProvider.deleteFile(asset.storage_key);
@@ -123,13 +127,14 @@ export class AssetService {
     const { error } = await supabase
       .from('assets')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', userId);
 
     if (error) throw error;
   }
 
-  async generateViewUrl(id: string) {
-    const asset = await this.getAsset(id);
+  async generateViewUrl(userId: string, id: string) {
+    const asset = await this.getAsset(userId, id);
     return await this.storageProvider.getDownloadUrl(asset.storage_key);
   }
 }

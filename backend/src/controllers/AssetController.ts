@@ -7,8 +7,9 @@ export class AssetController {
 
   public getUploadIntent = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = (req as any).user.id;
       const data = UploadIntentSchema.parse(req.body);
-      const result = await this.assetService.prepareUpload(data);
+      const result = await this.assetService.prepareUpload(userId, data);
       res.status(201).json(result);
     } catch (error) {
       next(error);
@@ -17,8 +18,9 @@ export class AssetController {
 
   public confirmAsset = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = (req as any).user.id;
       const { id } = ConfirmUploadSchema.parse({ id: req.params.id });
-      const asset = await this.assetService.confirmUpload(id);
+      const asset = await this.assetService.confirmUpload(userId, id);
       res.status(200).json(asset);
     } catch (error) {
       next(error);
@@ -27,8 +29,9 @@ export class AssetController {
 
   public listAssets = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = (req as any).user.id;
       const filters = ListAssetsSchema.parse(req.query);
-      const result = await this.assetService.listAssets(filters);
+      const result = await this.assetService.listAssets(userId, filters);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -37,8 +40,9 @@ export class AssetController {
 
   public getAsset = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = (req as any).user.id;
       const { id } = ConfirmUploadSchema.parse({ id: req.params.id });
-      const asset = await this.assetService.getAsset(id);
+      const asset = await this.assetService.getAsset(userId, id);
       res.status(200).json(asset);
     } catch (error) {
       next(error);
@@ -47,8 +51,9 @@ export class AssetController {
 
   public deleteAsset = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = (req as any).user.id;
       const { id } = ConfirmUploadSchema.parse({ id: req.params.id });
-      await this.assetService.deleteAsset(id);
+      await this.assetService.deleteAsset(userId, id);
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -57,8 +62,9 @@ export class AssetController {
 
   public getAssetViewUrl = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const userId = (req as any).user.id;
       const { id } = ConfirmUploadSchema.parse({ id: req.params.id });
-      const url = await this.assetService.generateViewUrl(id);
+      const url = await this.assetService.generateViewUrl(userId, id);
       res.redirect(url);
     } catch (error) {
       next(error);

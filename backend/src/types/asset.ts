@@ -6,6 +6,7 @@ export enum AssetStatus {
 
 export interface Asset {
   id: string;
+  userId: string;
   originalName: string;
   storageKey: string;
   mimeType: string;
