@@ -77,13 +77,13 @@ export class AssetService {
       .select('*', { count: 'exact' });
 
     if (filters.mimeType) {
-      query = query.eq('mimeType', filters.mimeType);
+      query = query.eq('mime_type', filters.mimeType);
     }
     if (filters.minSize) {
-      query = query.gte('sizeBytes', filters.minSize);
+      query = query.gte('size_bytes', filters.minSize);
     }
     if (filters.maxSize) {
-      query = query.lte('sizeBytes', filters.maxSize);
+      query = query.lte('size_bytes', filters.maxSize);
     }
 
     const { data, count, error } = await query
@@ -118,7 +118,7 @@ export class AssetService {
     const asset = await this.getAsset(id);
 
     // 1. Delete from GCS
-    await this.storageProvider.deleteFile(asset.storageKey);
+    await this.storageProvider.deleteFile(asset.storage_key);
 
     // 2. Delete from DB
     const { error } = await supabase
@@ -131,6 +131,6 @@ export class AssetService {
 
   async generateViewUrl(id: string) {
     const asset = await this.getAsset(id);
-    return await this.storageProvider.getDownloadUrl(asset.storageKey);
+    return await this.storageProvider.getDownloadUrl(asset.storage_key);
   }
 }

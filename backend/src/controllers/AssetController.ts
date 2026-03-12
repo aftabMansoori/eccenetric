@@ -3,7 +3,7 @@ import { AssetService } from '../services/AssetService.js';
 import { UploadIntentSchema, ListAssetsSchema, ConfirmUploadSchema } from '../schemas/asset.schema.js';
 
 export class AssetController {
-  constructor(private assetService: AssetService) {}
+  constructor(private assetService: AssetService) { }
 
   public getUploadIntent = async (req: Request, res: Response, next: NextFunction) => {
     try {

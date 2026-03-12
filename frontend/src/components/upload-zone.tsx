@@ -92,9 +92,8 @@ export function UploadZone({ onUpload, uploadProgress, onCancelUpload }: UploadZ
   return (
     <div className="space-y-4">
       <Card
-        className={`border-2 border-dashed p-12 text-center transition-colors ${
-          isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-        }`}
+        className={`border-2 border-dashed p-12 text-center transition-colors ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+          }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

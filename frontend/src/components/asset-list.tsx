@@ -64,7 +64,7 @@ export function AssetList({ assets, onDelete, onDownload }: AssetListProps) {
           <div className="flex h-12 w-12 items-center justify-center rounded bg-muted">
             {getIcon(asset.type)}
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h4 className="truncate mb-1">{asset.name}</h4>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
