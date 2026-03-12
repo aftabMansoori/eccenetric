@@ -79,7 +79,15 @@ export class AssetService {
       .eq('user_id', userId);
 
     if (filters.mimeType) {
-      query = query.eq('mime_type', filters.mimeType);
+      const mimeType = filters.mimeType.trim().toLowerCase();
+      // Support both coarse filters ("image", "pdf") and full MIME types ("image/png").
+      if (mimeType.includes('/')) {
+        query = query.eq('mime_type', mimeType);
+      } else if (mimeType === 'pdf') {
+        query = query.eq('mime_type', 'application/pdf');
+      } else {
+        query = query.ilike('mime_type', `${mimeType}/%`);
+      }
     }
     if (filters.minSize) {
       query = query.gte('size_bytes', filters.minSize);
