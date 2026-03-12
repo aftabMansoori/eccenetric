@@ -21,6 +21,15 @@ export class AuthService {
     return data;
   }
 
+  async signOut(accessToken: string) {
+    const { error } = await supabase.auth.signOut({
+      scope: 'global',
+    });
+
+    if (error) throw error;
+    return { success: true };
+  }
+
   async getUser(token: string) {
     const { data, error } = await supabase.auth.getUser(token);
 

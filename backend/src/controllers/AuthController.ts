@@ -31,4 +31,22 @@ export class AuthController {
       next(error);
     }
   };
+
+  public signOut = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ')
+        ? authHeader.slice('Bearer '.length)
+        : undefined;
+
+      if (!token) {
+        return res.status(400).json({ error: 'Missing access token' });
+      }
+
+      await this.authService.signOut(token);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

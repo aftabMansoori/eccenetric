@@ -11,5 +11,6 @@ const authController = new AuthController(authService);
 // Endpoints
 router.post('/signup', authController.signUp);
 router.post('/signin', authController.signIn);
+router.post('/logout', authController.signOut);
 
 export default router;
