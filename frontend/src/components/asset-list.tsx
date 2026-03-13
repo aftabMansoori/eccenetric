@@ -92,6 +92,7 @@ export function AssetList({ assets, onDelete, onDownload }: AssetListProps) {
               variant="outline"
               size="sm"
               onClick={() => onDownload(asset)}
+              className="cursor-pointer"
             >
               <Download className="h-4 w-4" />
             </Button>
@@ -99,6 +100,7 @@ export function AssetList({ assets, onDelete, onDownload }: AssetListProps) {
               variant="outline"
               size="sm"
               onClick={() => onDelete(asset.id)}
+              className="cursor-pointer"
             >
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>

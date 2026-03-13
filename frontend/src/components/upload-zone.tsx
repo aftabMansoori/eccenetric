@@ -116,7 +116,7 @@ export function UploadZone({ onUpload, uploadProgress, onCancelUpload }: UploadZ
             className="hidden"
             id="file-upload"
           />
-          <label htmlFor="file-upload">
+          <label htmlFor="file-upload" className="cursor-pointer">
             <Button asChild>
               <span>Select Files</span>
             </Button>

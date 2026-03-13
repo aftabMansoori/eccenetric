@@ -108,7 +108,7 @@ export function AssetGallery({ assets, onDelete, onDownload }: AssetGalleryProps
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 cursor-pointer"
                 onClick={() => onDownload(asset)}
               >
                 <Download className="h-4 w-4 mr-1" />
@@ -117,6 +117,7 @@ export function AssetGallery({ assets, onDelete, onDownload }: AssetGalleryProps
               <Button
                 variant="outline"
                 size="sm"
+                className="cursor-pointer"
                 onClick={() => onDelete(asset.id)}
               >
                 <Trash2 className="h-4 w-4 text-destructive" />

@@ -79,13 +79,11 @@ export function ListTab() {
 
   const handleDownload = useCallback(async (asset: Asset) => {
     try {
-      toast.info(`Preparing ${asset.name} for download...`);
-      const link = document.createElement('a');
-      link.href = asset.url;
-      link.setAttribute('download', asset.name);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const token = localStorage.getItem('dam_access_token');
+      const url = token
+        ? `${asset.url}?access_token=${encodeURIComponent(token)}`
+        : asset.url;
+      window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) {
       toast.error('Failed to download asset');
     }

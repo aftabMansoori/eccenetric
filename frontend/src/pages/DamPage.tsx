@@ -43,7 +43,7 @@ export default function DamPage() {
                 type="button"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="inline-flex items-center px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+                className="inline-flex items-center px-3 text-xs font-medium cursor-pointer"
               >
                 <LogOut className="mr-1.5 h-4 w-4" />
                 {isLoggingOut ? 'Logging out...' : 'Logout'}
@@ -58,15 +58,15 @@ export default function DamPage() {
         <Tabs defaultValue="gallery" className="space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <TabsList>
-              <TabsTrigger value="upload">
+              <TabsTrigger value="upload" className="cursor-pointer">
                 <UploadIcon className="mr-2 h-4 w-4" />
                 Upload
               </TabsTrigger>
-              <TabsTrigger value="gallery">
+              <TabsTrigger value="gallery" className="cursor-pointer">
                 <LayoutGrid className="mr-2 h-4 w-4" />
                 Gallery
               </TabsTrigger>
-              <TabsTrigger value="list">
+              <TabsTrigger value="list" className="cursor-pointer">
                 <List className="mr-2 h-4 w-4" />
                 List
               </TabsTrigger>
