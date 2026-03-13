@@ -3,7 +3,12 @@ import { Request, Response, NextFunction } from "express";
 import { supabase } from "../utils/SupaBase.util.js";
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(' ')[1];
+    let token = req.headers.authorization?.split(' ')[1];
+
+    // Fallback for browser requests (e.g. <img>, direct downloads) that can't set Authorization header
+    if (!token && typeof req.query.access_token === 'string') {
+        token = req.query.access_token;
+    }
 
     if (!token) {
         return res.status(401).json({ error: 'Authentication required' });

@@ -27,10 +27,15 @@ export function AssetGallery({ assets, onDelete, onDownload }: AssetGalleryProps
   };
 
   const renderThumbnail = (asset: Asset) => {
+    const token = typeof window !== 'undefined'
+      ? localStorage.getItem('dam_access_token')
+      : null;
+    const urlWithToken = token ? `${asset.url}?access_token=${encodeURIComponent(token)}` : asset.url;
+
     if (asset.type === 'image') {
       return (
         <img
-          src={asset.url}
+          src={urlWithToken}
           alt={asset.name}
           className="h-full w-full object-cover"
         />

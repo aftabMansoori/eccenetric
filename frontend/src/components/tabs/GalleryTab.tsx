@@ -82,7 +82,12 @@ export function GalleryTab() {
     try {
       toast.info(`Preparing ${asset.name} for download...`);
       const link = document.createElement('a');
-      link.href = asset.url;
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('dam_access_token')
+        : null;
+      link.href = token
+        ? `${asset.url}?access_token=${encodeURIComponent(token)}`
+        : asset.url;
       link.setAttribute('download', asset.name);
       document.body.appendChild(link);
       link.click();
