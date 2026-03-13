@@ -8,9 +8,10 @@ interface AuthState {
 }
 
 const token = localStorage.getItem('dam_access_token');
+const storedUser = localStorage.getItem('dam_user');
 
 const initialState: AuthState = {
-  user: null,
+  user: storedUser ? JSON.parse(storedUser) : null,
   token,
   isAuthenticated: !!token,
 };
@@ -24,12 +25,14 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.isAuthenticated = true;
       localStorage.setItem('dam_access_token', action.payload.token);
+      localStorage.setItem('dam_user', JSON.stringify(action.payload.user));
     },
     clearCredentials(state) {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
       localStorage.removeItem('dam_access_token');
+      localStorage.removeItem('dam_user');
     },
   },
 });
